@@ -156,14 +156,25 @@ async function run(query: string, options: {
   }
 
   const outDir = join(options.out, query.replace(/\s+/g, '-'));
+  let activeFamilies = families;
   let currentFamily = primaryFamily;
 
   while (true) {
-    const current = families.get(currentFamily)!;
-    const relatedFamilies = showFamilyGroups(families, currentFamily);
-    const action = await promptAction(current.length, relatedFamilies);
+    const current = activeFamilies.get(currentFamily)!;
+    const isFontsourcePrimary = current.some((v) => v.source === 'fontsource');
+    const relatedFamilies = showFamilyGroups(activeFamilies, currentFamily);
+    const action = await promptAction(current.length, relatedFamilies, isFontsourcePrimary && fs.length > 0);
 
     if (action === 'quit') break;
+
+    if (action === 'github') {
+      const ghScored = scored.filter((r) => r.source !== 'fontsource');
+      const { families: ghFamilies, primaryFamily: ghPrimary } = groupByFamily(ghScored, query);
+      activeFamilies = ghFamilies;
+      currentFamily = ghPrimary;
+      console.log();
+      continue;
+    }
 
     if (typeof action === 'object' && 'switchToFamily' in action) {
       currentFamily = action.switchToFamily;

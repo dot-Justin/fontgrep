@@ -1,6 +1,6 @@
 # fontgrep
 
-search github for font files by name. find what you need, download it, move on.
+search for font files by name. find what you need, download it, move on.
 
 ```
 npx fontgrep "GT Walsheim"
@@ -8,7 +8,7 @@ npx fontgrep "GT Walsheim"
 
 ---
 
-`fontgrep` searches github for font files that developers have committed to public repositories alongside their projects. this is extraordinarily common. every web project that uses a custom font has to put the font file somewhere, and for a huge number of developers that *somewhere* is their public github repo. the files are already public, `fontgrep` just helps you find them.
+`fontgrep` searches [fontsource](https://fontsource.org) for official open-source fonts first, then falls back to github repos where developers have committed font files alongside their projects. this is extraordinarily common. every web project that uses a custom font has to put the font file somewhere, and for a huge number of developers that *somewhere* is their public github repo.
 
 ---
 
@@ -28,9 +28,9 @@ npx fontgrep "Font Name"
 
 ## setup
 
-no setup required. `fontgrep` works out of the box using [sourcegraph](https://sourcegraph.com) to search public github repos.
+no setup required. `fontgrep` works out of the box.
 
-on first run, it'll ask if you want to add a github token for extra results. this is optional — github search finds some files sourcegraph misses, but has strict rate limits (~30 req/min) and slows things down.
+on first run, it'll ask if you want to add a github token for extra results. this is optional. github search finds some files sourcegraph misses, but has strict rate limits (~30 req/min) and slows things down.
 
 ```
 $ fontgrep "anything"
@@ -78,48 +78,40 @@ results are grouped by weight automatically. select numbers, ranges, or [a] for 
 ```
 $ fontgrep "Inter"
 
-  780 results across 156 repos (3000 before dedup)
+  806 github results across 158 repos  ✦ fontsource
 
-  inter  ·  12 weights  ·  best source: ******/****** (15.0k★)
+  inter  ·  20 weights  ·  fontsource  ✦
 
      1. thin                 Inter-Thin.woff2                              woff2
-     2. extralight           Inter-ExtraLight.woff2                        woff2
-     3. light                Inter-Light.woff2                             woff2
-     4. regular              Inter-Regular.woff2                           woff2
-     5. variable             InterVariable.woff2                           woff2
-     6. regular italic       Inter-Italic.woff2                            woff2
-     7. variable italic      InterVariable-Italic.woff2                    woff2
-     8. medium               Inter-Medium.woff2                            woff2
-     9. semibold             Inter-SemiBold.woff2                          woff2
-    10. bold                 Inter-Bold.woff2                              woff2
-    11. extrabold            Inter-ExtraBold.woff2                         woff2
-    12. black                Inter-Black.woff2                             woff2
+     2. thin italic          Inter-Thin-Italic.woff2                       woff2
+     3. extralight           Inter-ExtraLight.woff2                        woff2
+    ...
+    20. black italic         Inter-Black-Italic.woff2                      woff2
 
-  also found 5 related families:
-    inter-ui (7 weights)
-    intertight (5 weights)
-    interdisplay (10 weights)
+  also found 8 related families:
+    [f1] inter-ui (7 weights)
+    [f2] interdisplay (10 weights)
+    ...
 
-  → download [1-12], [a] all, [q] quit: a
+  → download [1-20], [a] all, [f1-f8] switch family, [g] github results, [q] quit: a
 
   ↓ Inter-Thin.woff2              done
   ↓ Inter-ExtraLight.woff2        done
-  ↓ Inter-Light.woff2             done
-  ↓ Inter-Regular.woff2           done
-  ↓ InterVariable.woff2           done
   ...
 
-  saved to ./Inter/
+  saved to ./inter/
 ```
 
 you can also pick specific weights or ranges: `4`, `1-4`, `1,4,8`, `1-4,8`
+
+type `f1`, `f2`, etc. to switch to a related family. type `g` to browse raw github results instead of the fontsource version.
 
 **rare fonts work too**
 
 ```
 $ fontgrep "Signifier"
 
-  38 results across 10 repos
+  38 github results across 10 repos
 
   signifier  ·  7 weights  ·  best source: ******/****** (1.9k★)
 
@@ -136,8 +128,6 @@ $ fontgrep "Signifier"
 
 ```
 $ fontgrep "Power Grotesk" --first --out ~/fonts/
-
-  1 results across 1 repos
 
   ↓ PowerGrotesk-UltraBold.woff2    done
 
@@ -156,25 +146,37 @@ fontgrep "Pragmata Pro" --raw | xargs -I {} wget {}
 
 ---
 
+## sources
+
+`fontgrep` searches in order:
+
+1. **[fontsource](https://fontsource.org)** — curated open-source fonts with direct CDN downloads. no auth needed. if your font is here, this is the cleanest version.
+2. **[sourcegraph](https://sourcegraph.com)** — indexes millions of public github repos. no auth required, no rate limits.
+3. **github api** — optional, requires a token. finds additional files sourcegraph misses.
+
+when fontsource has a match, it's shown first. type `[g]` at the prompt to browse the github results instead.
+
+---
+
 ## how results are ranked
 
 results aren't just sorted by popularity. `fontgrep` scores each file:
 
-- **format**: woff2 scores higher than otf, otf higher than ttf. woff2 is what you actually want for web; ttf for desktop install.
+- **source**: fontsource results rank highest — they're official, complete, and always woff2.
+- **format**: woff2 scores higher than otf, otf higher than ttf.
 - **repo stars**: log-scaled, capped contribution. a signal, not a guarantee.
-- **filename match**: files whose names start with your query score significantly higher — enough to beat a high-star repo serving an unrelated font.
+- **filename match**: files whose names start with your query score significantly higher, enough to beat a high-star repo serving an unrelated font.
 - **path depth**: files in `fonts/` or `assets/fonts/` score higher than files nested six directories deep in a test fixture.
 - **deduplication**: identical filenames across repos are collapsed, keeping the highest-scored copy.
-- **family selection**: results are grouped by font family, and the family whose name best matches your query is shown first — not just whichever family has the most weights.
+- **family selection**: results are grouped by font family, and the family whose name best matches your query is shown first.
 
 ---
 
 ## notes
 
-- search is powered by [sourcegraph](https://sourcegraph.com) — no auth required, no rate limits, indexes millions of public repos.
-- a github token can be added optionally for supplemental results. `fontgrep` waits out rate limits automatically.
-- font names are fuzzy-matched — `fontgrep` tries multiple variants of your query (spaces, hyphens, underscores, concatenated) so you don't have to guess the filename format.
-- results are grouped by weight automatically. subset files (cyrillic, latin-ext, etc.) are filtered out so you get clean, complete font files.
+- font names are fuzzy-matched. `fontgrep` tries multiple variants of your query (spaces, hyphens, underscores, concatenated) so you don't have to guess the filename format.
+- subset files (cyrillic, latin-ext, etc.) are filtered out so you get clean, complete font files.
+- fontsource downloads use the latin subset by default.
 
 ---
 
