@@ -78,7 +78,7 @@ results are grouped by weight automatically. select numbers, ranges, or [a] for 
 ```
 $ fontgrep "Inter"
 
-  ✔ 780 results across 156 repos (3000 before dedup)
+  780 results across 156 repos (3000 before dedup)
 
   inter  ·  12 weights  ·  best source: ******/****** (15.0k★)
 
@@ -119,7 +119,7 @@ you can also pick specific weights or ranges: `4`, `1-4`, `1,4,8`, `1-4,8`
 ```
 $ fontgrep "Signifier"
 
-  ✔ 38 results across 10 repos
+  38 results across 10 repos
 
   signifier  ·  7 weights  ·  best source: ******/****** (1.9k★)
 
@@ -137,7 +137,7 @@ $ fontgrep "Signifier"
 ```
 $ fontgrep "Power Grotesk" --first --out ~/fonts/
 
-  ✔ 1 results across 1 repos
+  1 results across 1 repos
 
   ↓ PowerGrotesk-UltraBold.woff2    done
 
@@ -162,9 +162,10 @@ results aren't just sorted by popularity. `fontgrep` scores each file:
 
 - **format**: woff2 scores higher than otf, otf higher than ttf. woff2 is what you actually want for web; ttf for desktop install.
 - **repo stars**: log-scaled, capped contribution. a signal, not a guarantee.
-- **filename match**: files whose names start with your query score higher than buried dependencies.
+- **filename match**: files whose names start with your query score significantly higher — enough to beat a high-star repo serving an unrelated font.
 - **path depth**: files in `fonts/` or `assets/fonts/` score higher than files nested six directories deep in a test fixture.
 - **deduplication**: identical filenames across repos are collapsed, keeping the highest-scored copy.
+- **family selection**: results are grouped by font family, and the family whose name best matches your query is shown first — not just whichever family has the most weights.
 
 ---
 
