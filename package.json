@@ -1,6 +1,6 @@
 {
   "name": "fontgrep",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Search GitHub for font files by name",
   "type": "module",
   "bin": {
