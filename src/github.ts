@@ -239,5 +239,6 @@ export async function searchFonts(
 }
 
 export function buildRawUrl(result: SearchResult): string {
+  if (result.fontsourceUrl) return result.fontsourceUrl;
   return `https://raw.githubusercontent.com/${result.repo}/${result.defaultBranch}/${result.path}`;
 }

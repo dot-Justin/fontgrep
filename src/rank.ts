@@ -6,6 +6,8 @@ const EXT_RANK: Record<string, number> = { woff2: 30, otf: 20, ttf: 10 };
 function scoreResult(result: SearchResult, query: string): number {
   let s = 0;
 
+  if (result.source === 'fontsource') s += 100;
+
   s += EXT_RANK[result.ext] ?? 0;
   s += Math.min(Math.log10(result.stars + 1) * 10, 50);
 

@@ -11,7 +11,11 @@ export interface SearchResult {
   stars: number;
   ext: string;
   defaultBranch: string;
+  source?: 'fontsource';
+  fontsourceUrl?: string;
 }
+
+export type PromptResult = 'quit' | 'all' | number[] | { switchToFamily: string };
 
 export interface ScoredResult extends SearchResult {
   rank: number;

@@ -1,5 +1,6 @@
 import { input, password, confirm } from '@inquirer/prompts';
 import chalk from 'chalk';
+import type { PromptResult } from './types.js';
 
 export async function promptSetup(): Promise<string | null> {
   console.log();
@@ -60,9 +61,12 @@ export async function promptToken(): Promise<string> {
   return token.trim();
 }
 
-export async function promptAction(maxRank: number): Promise<'quit' | 'all' | number[]> {
+export async function promptAction(maxRank: number, relatedFamilies: string[] = []): Promise<PromptResult> {
+  const familyHint = relatedFamilies.length > 0
+    ? `, [f1-f${relatedFamilies.length}] switch family`
+    : '';
   const answer = await input({
-    message: `download [1-${maxRank}], [a] all, [q] quit`,
+    message: `download [1-${maxRank}], [a] all${familyHint}, [q] quit`,
     theme: { prefix: '  →' },
   });
 
@@ -70,6 +74,17 @@ export async function promptAction(maxRank: number): Promise<'quit' | 'all' | nu
 
   if (trimmed === 'q' || trimmed === 'quit') return 'quit';
   if (trimmed === 'a' || trimmed === 'all') return 'all';
+
+  // Family switch: f1, f2, ...
+  const familyMatch = trimmed.match(/^f(\d+)$/);
+  if (familyMatch) {
+    const idx = parseInt(familyMatch[1]) - 1;
+    if (idx >= 0 && idx < relatedFamilies.length) {
+      return { switchToFamily: relatedFamilies[idx] };
+    }
+    console.log(chalk.red(`  no such family: f${idx + 1}`));
+    return promptAction(maxRank, relatedFamilies);
+  }
 
   // Support ranges and comma-separated: "1-3", "1,3,5", "1-3,5"
   const nums: number[] = [];
@@ -89,7 +104,7 @@ export async function promptAction(maxRank: number): Promise<'quit' | 'all' | nu
 
   if (nums.length === 0) {
     console.log(chalk.red(`  invalid selection: ${answer}`));
-    return promptAction(maxRank);
+    return promptAction(maxRank, relatedFamilies);
   }
 
   return [...new Set(nums)].sort((a, b) => a - b);

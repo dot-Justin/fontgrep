@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { ensureConfigured, saveConfig, getConfig } from './config.js';
 import { searchFonts } from './github.js';
 import { searchSourcegraph } from './sourcegraph.js';
+import { searchFontsource } from './fontsource.js';
 import { rankResults } from './rank.js';
 import { showResultsTable, showFamilyGroups, showRawUrls } from './display.js';
 import { downloadFont, downloadAll } from './download.js';
@@ -76,7 +77,10 @@ async function run(query: string, options: {
   const config = await ensureConfigured();
 
   const stopBanner = startBanner(query);
-  const sg = await searchSourcegraph(query, options.ext, () => {});
+  const [sg, fs] = await Promise.all([
+    searchSourcegraph(query, options.ext, () => {}),
+    searchFontsource(query),
+  ]);
   stopBanner();
 
   // Secondary: GitHub API (only if token configured)
@@ -89,7 +93,7 @@ async function run(query: string, options: {
     }
   }
 
-  const merged = mergeResults(sg.results, gh.results);
+  const merged = mergeResults(fs, mergeResults(sg.results, gh.results));
   const scored = rankResults(merged, query);
 
   if (scored.length === 0) {
@@ -97,10 +101,13 @@ async function run(query: string, options: {
     return;
   }
 
-  const repos = new Set(scored.map((r) => r.repo));
+  const githubCount = scored.filter((r) => r.source !== 'fontsource').length;
+  const repos = new Set(scored.filter((r) => r.source !== 'fontsource').map((r) => r.repo));
+  const fontsourceNote = fs.length > 0 ? chalk.cyan('  ✦ fontsource') : '';
   console.log(
-    `  ${chalk.bold(String(scored.length))} results across ${repos.size} repos` +
-    (scored.length < merged.length ? chalk.dim(` (${merged.length} before dedup)`) : ''),
+    `  ${chalk.bold(String(githubCount))} github results across ${repos.size} repos` +
+    (githubCount < merged.length - fs.length ? chalk.dim(` (${merged.length - fs.length} before dedup)`) : '') +
+    fontsourceNote,
   );
   console.log();
 
@@ -131,7 +138,7 @@ async function run(query: string, options: {
     console.log();
     if (action === 'all') {
       await downloadAll(scored, options.out, token);
-    } else {
+    } else if (Array.isArray(action)) {
       const selected = action.map((n) => scored[n - 1]);
       await downloadAll(selected, options.out, token);
       console.log();
@@ -142,28 +149,39 @@ async function run(query: string, options: {
 
   // Default: family-grouped view
   const { families, primaryFamily } = groupByFamily(scored, query);
-  const primary = families.get(primaryFamily);
 
-  if (!primary || primary.length === 0) {
+  if (families.size === 0) {
     showResultsTable(scored);
     return;
   }
 
-  showFamilyGroups(families, primaryFamily);
-
-  const action = await promptAction(primary.length);
-  if (action === 'quit') return;
-
-  console.log();
   const outDir = join(options.out, query.replace(/\s+/g, '-'));
-  if (action === 'all') {
-    await downloadAll(primary, outDir, token);
-  } else {
-    const selected = action.map((n) => primary[n - 1]);
-    await downloadAll(selected, outDir, token);
+  let currentFamily = primaryFamily;
+
+  while (true) {
+    const current = families.get(currentFamily)!;
+    const relatedFamilies = showFamilyGroups(families, currentFamily);
+    const action = await promptAction(current.length, relatedFamilies);
+
+    if (action === 'quit') break;
+
+    if (typeof action === 'object' && 'switchToFamily' in action) {
+      currentFamily = action.switchToFamily;
+      console.log();
+      continue;
+    }
+
+    console.log();
+    if (action === 'all') {
+      await downloadAll(current, outDir, token);
+    } else if (Array.isArray(action)) {
+      const selected = action.map((n) => current[n - 1]);
+      await downloadAll(selected, outDir, token);
+    }
+    console.log();
+    console.log(chalk.dim(`  saved to ${outDir}/`));
+    break;
   }
-  console.log();
-  console.log(chalk.dim(`  saved to ${outDir}/`));
 }
 
 program.parse();

@@ -46,15 +46,22 @@ function formatWeight(weight: string, style: string): string {
 export function showFamilyGroups(
   families: Map<string, FamilyVariant[]>,
   primaryFamily: string,
-): void {
+): string[] {
   const primary = families.get(primaryFamily);
   const others = [...families.entries()].filter(([k]) => k !== primaryFamily);
 
   if (primary && primary.length > 0) {
-    const bestRepo = primary.reduce((best, v) => v.stars > best.stars ? v : best, primary[0]);
+    const isFromFontsource = primary.some((v) => v.source === 'fontsource');
+    const sourceLabel = isFromFontsource
+      ? chalk.cyan('fontsource') + chalk.dim('  ✦')
+      : (() => {
+          const bestRepo = primary.reduce((best, v) => v.stars > best.stars ? v : best, primary[0]);
+          return chalk.dim(`best source: ${bestRepo.repo} (${formatStars(bestRepo.stars)}★)`);
+        })();
+
     console.log(
       `  ${chalk.bold(primary[0].familyBase)}` +
-      chalk.dim(`  ·  ${primary.length} weights  ·  best source: ${bestRepo.repo} (${formatStars(bestRepo.stars)}★)`),
+      chalk.dim(`  ·  ${primary.length} weights  ·  `) + sourceLabel,
     );
     console.log();
 
@@ -68,17 +75,19 @@ export function showFamilyGroups(
     }
   }
 
-  // Only show related families with 3+ weights (filters out noise)
+  // Only show related families with 5+ weights (filters out noise)
   const realOthers = others.filter(([, v]) => v.length >= 5);
   if (realOthers.length > 0) {
     console.log();
     console.log(chalk.dim(`  also found ${realOthers.length} related families:`));
-    for (const [name, variants] of realOthers) {
-      console.log(chalk.dim(`    ${name} (${variants.length} weights)`));
+    for (let i = 0; i < realOthers.length; i++) {
+      const [name, variants] = realOthers[i];
+      console.log(chalk.dim(`    [f${i + 1}] ${name} (${variants.length} weights)`));
     }
   }
 
   console.log();
+  return realOthers.map(([k]) => k);
 }
 
 export function showRawUrls(results: ScoredResult[]): void {
