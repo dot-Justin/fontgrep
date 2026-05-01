@@ -141,7 +141,7 @@ async function run(query: string, options: {
   }
 
   // Default: family-grouped view
-  const { families, primaryFamily } = groupByFamily(scored);
+  const { families, primaryFamily } = groupByFamily(scored, query);
   const primary = families.get(primaryFamily);
 
   if (!primary || primary.length === 0) {

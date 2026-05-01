@@ -9,9 +9,10 @@ function scoreResult(result: SearchResult, query: string): number {
   s += EXT_RANK[result.ext] ?? 0;
   s += Math.min(Math.log10(result.stars + 1) * 10, 50);
 
-  const normalizedFilename = result.filename.toLowerCase().replace(/[-_]/g, '');
+  const normalizedFilename = result.filename.toLowerCase().replace(/[-_. ]/g, '');
   const normalizedQuery = query.toLowerCase().replace(/\s+/g, '');
-  if (normalizedFilename.startsWith(normalizedQuery)) s += 20;
+  if (normalizedFilename.startsWith(normalizedQuery)) s += 60;
+  else if (normalizedFilename.includes(normalizedQuery)) s += 30;
 
   s -= Math.min(result.path.split('/').length * 2, 10);
 

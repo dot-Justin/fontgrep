@@ -95,7 +95,17 @@ export function parseVariant(filename: string): {
   return { weight, style, isSubset, isVariable, familyBase };
 }
 
-export function groupByFamily(results: ScoredResult[]): {
+function queryMatchScore(familyName: string, query: string): number {
+  const f = familyName.replace(/-/g, '');
+  const q = query.toLowerCase().replace(/\s+/g, '');
+  if (f === q) return 4;
+  if (f.startsWith(q)) return 3;
+  if (f.includes(q)) return 2;
+  if (query.toLowerCase().split(/\s+/).every((w) => f.includes(w))) return 1;
+  return 0;
+}
+
+export function groupByFamily(results: ScoredResult[], query: string): {
   families: Map<string, FamilyVariant[]>;
   primaryFamily: string;
 } {
@@ -138,14 +148,21 @@ export function groupByFamily(results: ScoredResult[]): {
     familyMap.set(key, sorted);
   }
 
-  // Determine primary family: most weights wins, stars only break ties
+  // Determine primary family: query match first, then most weights, then stars
   let primaryFamily = '';
+  let bestMatch = -1;
   let bestWeights = -1;
   let bestStars = -1;
   for (const [key, variants] of familyMap) {
+    const match = queryMatchScore(key, query);
     const weights = variants.length;
     const stars = variants.reduce((s, v) => s + v.stars, 0);
-    if (weights > bestWeights || (weights === bestWeights && stars > bestStars)) {
+    const beats =
+      match > bestMatch ||
+      (match === bestMatch && weights > bestWeights) ||
+      (match === bestMatch && weights === bestWeights && stars > bestStars);
+    if (beats) {
+      bestMatch = match;
       bestWeights = weights;
       bestStars = stars;
       primaryFamily = key;
