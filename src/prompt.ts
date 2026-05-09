@@ -67,7 +67,7 @@ export async function promptAction(maxRank: number, relatedFamilies: string[] = 
     : '';
   const githubHint = showGithub ? ', [g] github results' : '';
   const answer = await input({
-    message: `download [1-${maxRank}], [a] all${familyHint}${githubHint}, [q] quit`,
+    message: `download [1-${maxRank}], [a] all, [p] preview${familyHint}${githubHint}, [q] quit`,
     theme: { prefix: '  →' },
   });
 
@@ -76,6 +76,7 @@ export async function promptAction(maxRank: number, relatedFamilies: string[] = 
   if (trimmed === 'q' || trimmed === 'quit') return 'quit';
   if (trimmed === 'a' || trimmed === 'all') return 'all';
   if (showGithub && (trimmed === 'g' || trimmed === 'github')) return 'github';
+  if (trimmed === 'p' || trimmed === 'preview') return 'preview';
 
   // Family switch: f1, f2, ...
   const familyMatch = trimmed.match(/^f(\d+)$/);

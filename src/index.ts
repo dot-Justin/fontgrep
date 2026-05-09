@@ -12,6 +12,7 @@ import { downloadFont, downloadAll } from './download.js';
 import { promptAction, promptToken } from './prompt.js';
 import { groupByFamily } from './family.js';
 import { startBanner } from './banner.js';
+import { startPreview } from './preview.js';
 import { join } from 'node:path';
 import type { SearchResult } from './types.js';
 
@@ -166,6 +167,22 @@ async function run(query: string, options: {
     const action = await promptAction(current.length, relatedFamilies, isFontsourcePrimary && fs.length > 0);
 
     if (action === 'quit') break;
+
+    if (action === 'preview') {
+      const isFontsource = current.some((v) => v.source === 'fontsource');
+      const bestRepo = current.reduce((b, v) => v.stars > b.stars ? v : b, current[0]);
+      const starsStr = bestRepo.stars >= 1000
+        ? `${(bestRepo.stars / 1000).toFixed(1)}k`
+        : String(bestRepo.stars);
+      const sourceLabel = isFontsource
+        ? 'fontsource'
+        : `${bestRepo.repo} (${starsStr}★)`;
+      const displayLabel = `${current.length} weight${current.length !== 1 ? 's' : ''} · ${sourceLabel}`;
+      console.log();
+      await startPreview(current, token, currentFamily, displayLabel);
+      console.log();
+      continue;
+    }
 
     if (action === 'github') {
       const ghScored = scored.filter((r) => r.source !== 'fontsource');

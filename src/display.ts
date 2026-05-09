@@ -59,9 +59,14 @@ export function showFamilyGroups(
           return chalk.dim(`best source: ${bestRepo.repo} (${formatStars(bestRepo.stars)}★)`);
         })();
 
+    const ghRepos = new Set(primary.filter((v) => v.source !== 'fontsource').map((v) => v.repo));
+    const mergedNote = !isFromFontsource && ghRepos.size > 1
+      ? chalk.dim(`  ·  ${ghRepos.size} repos merged`)
+      : '';
+
     console.log(
       `  ${chalk.bold(primary[0].familyBase)}` +
-      chalk.dim(`  ·  ${primary.length} weights  ·  `) + sourceLabel,
+      chalk.dim(`  ·  ${primary.length} weights  ·  `) + sourceLabel + mergedNote,
     );
     console.log();
 

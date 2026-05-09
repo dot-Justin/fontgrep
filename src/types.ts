@@ -15,7 +15,7 @@ export interface SearchResult {
   fontsourceUrl?: string;
 }
 
-export type PromptResult = 'quit' | 'all' | 'github' | number[] | { switchToFamily: string };
+export type PromptResult = 'quit' | 'all' | 'github' | 'preview' | number[] | { switchToFamily: string };
 
 export interface ScoredResult extends SearchResult {
   rank: number;

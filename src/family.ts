@@ -87,6 +87,8 @@ export function parseVariant(filename: string): {
     .replace(/[-_]v\d+[-_]/g, '-')    // version strings like -v14-
     .replace(/[-_]+$/, '')             // trailing separators
     .replace(/^[-_]+/, '')             // leading separators
+    .replace(/([a-z])([A-Z])/g, '$1-$2')         // camelCase: openSans → open-Sans
+    .replace(/([A-Z]{2,})([A-Z][a-z])/g, '$1-$2') // acronym+title: GFSDidot → GFS-Didot
     .toLowerCase();
 
   // Normalize separators
