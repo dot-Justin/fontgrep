@@ -21,7 +21,7 @@ const program = new Command();
 program
   .name('fontgrep')
   .description('Search GitHub for font files by name')
-  .version('0.1.0')
+  .version('0.3.0')
   .argument('<query>', 'font name to search for')
   .option('-e, --ext <extensions...>', 'file extensions to search', ['ttf', 'otf', 'woff2'])
   .option('-f, --first', 'download the top result immediately')

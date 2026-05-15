@@ -1,6 +1,6 @@
 {
   "name": "fontgrep",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Search GitHub for font files by name",
   "type": "module",
   "bin": {
@@ -12,7 +12,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=18.0.0"

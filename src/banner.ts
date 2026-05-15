@@ -25,7 +25,7 @@ export function startBanner(query: string): () => void {
   if (!process.stdout.isTTY) return () => {};
 
   const letters = WORD.split('');
-  const suffix = ` for ${query}`;
+  const suffix = ` ${query}`;
   const start = Date.now();
   const totalDuration =
     INITIAL_CHAOS_MS +
